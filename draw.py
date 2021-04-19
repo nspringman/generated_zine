@@ -3,8 +3,9 @@ import random
 import drawBot as db
 import json
 import numpy as np
+import urllib
 
-pageWidth, pageHeight = 496, 737
+# pageWidth, pageHeight = 496, 737
 
 COLOR_BLACK = (56, 48, 0, 74)
 COLOR_CREAM = (0, 3, 13, 8)
@@ -30,6 +31,14 @@ def calculateFontSizeByWidth(text, font, textBoxWidth):
 def colorWithBuffer(buffer, c, m, y, k):
   return cmyk(c + buffer*random.random(), m + buffer*random.random(), y + buffer*random.random(), k + buffer*random.random())
 
+def constrainImageToHeight(sourceImage, targetHeight, x, y):
+  _, srcHeight = sourceImage.size()
+  factorWidth = factorHeight = targetHeight / srcHeight
+  with db.savedState():
+      db.translate(x, y)
+      db.scale(factorWidth, factorHeight)
+      db.image(sourceImage, (0, 0))
+
 def drawSquareAtCenter(x, y, squareSize):
   squareSize = squareSize / 2
   # db.strokeWidth(0.5)
@@ -39,18 +48,18 @@ def drawSquareAtCenter(x, y, squareSize):
   db.rect(x, y - squareSize, squareSize, squareSize)
   db.rect(x - squareSize, y - squareSize, squareSize, squareSize)
 
-def backgroundSquares():
+def backgroundSquares(width, height):
   tileSize = 5
 
   seedColor = COLOR_BLACK
   colorBuffer = 20
-  for x in range(0, pageWidth, tileSize):
-    for y in range(0, pageHeight, tileSize):
+  for x in range(0, width, tileSize):
+    for y in range(0, height, tileSize):
       db.cmykFill( *colorWithBuffer(colorBuffer,*seedColor) )
       db.rect(x, y, tileSize, tileSize)
 
-def borderFlowers(squareSize):
-  tileSize = 5
+def borderFlowers(squareSize, tileSize):
+  # tileSize = 5
 
   #background white
   seedColor = (0, 2, 6, 3)
@@ -140,12 +149,14 @@ def borderFlowers(squareSize):
           drawSquareAtCenter(centerPoint[0], centerPoint[1] + radius * 0.5, tileSize)
 
 def titlePage(drinkName, drinkData):
+  pageHeight = 737
+  pageWidth = 496
   db.newPage(496, 737)
   
   # db.cmykFill(*cmyk(71, 50, 0, 41))
   # db.rect(0, 0, 496, 737)
   actualSquareWidth = 6/pageWidth
-  backgroundSquares()
+  backgroundSquares(496, 737)
 
   margin = 130
   textBoxHeight = 400
@@ -177,27 +188,87 @@ def titlePage(drinkName, drinkData):
     for h in range(0, squaresHigh):
       with db.savedState():
         db.translate(0, h * squareSize)
-        borderFlowers(squareSize)
+        borderFlowers(squareSize,5)
 
     db.translate(squareSize * squaresWide - squareSize, 0)
     for h in range(0, squaresHigh):
       with db.savedState():
         db.translate(0, h * squareSize)
-        borderFlowers(squareSize)
+        borderFlowers(squareSize,5)
   with db.savedState():
     db.translate(marginLeft + squareSize, marginBottom)
     for w in range(0, squaresWide - 2):
       with db.savedState():
         db.translate(w * squareSize, 0)
-        borderFlowers(squareSize)
+        borderFlowers(squareSize,5)
   with db.savedState():
     db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
     for w in range(0, squaresWide - 2):
       with db.savedState():
         db.translate(w * squareSize, 0)
-        borderFlowers(squareSize)
+        borderFlowers(squareSize,5)
 
   db.saveImage('output/title-page.png')
+
+def spread(drinkName, drinkData):
+  pageHeight = 737
+  pageWidth = 992
+  db.newPage(992, 737)
+
+  backgroundSquares(992, 737)
+
+  squareSize = 53
+  squaresHigh = 12
+  squaresWide = 16
+  marginBottom = (pageHeight - (squareSize * squaresHigh)) / 2
+  marginLeft = (pageWidth - (squareSize * squaresWide)) / 2
+  with db.savedState():
+    db.translate(marginLeft, marginBottom)
+    for h in range(0, squaresHigh):
+      with db.savedState():
+        db.translate(0, h * squareSize)
+        borderFlowers(squareSize,3)
+
+    db.translate(squareSize * squaresWide - squareSize, 0)
+    for h in range(0, squaresHigh):
+      with db.savedState():
+        db.translate(0, h * squareSize)
+        borderFlowers(squareSize,3)
+  with db.savedState():
+    db.translate(marginLeft + squareSize, marginBottom)
+    for w in range(0, squaresWide - 2):
+      with db.savedState():
+        db.translate(w * squareSize, 0)
+        borderFlowers(squareSize,3)
+  with db.savedState():
+    db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
+    for w in range(0, squaresWide - 2):
+      with db.savedState():
+        db.translate(w * squareSize, 0)
+        borderFlowers(squareSize,3)
+  
+  db.cmykFill(*cmyk(*COLOR_CREAM))
+  db.rect(marginLeft + squareSize, marginBottom + squareSize, (squaresWide - 2) * squareSize, (squaresHigh - 2) * squareSize)
+
+  ingredientImgObj = db.ImageObject('http://www.thecocktaildb.com/images/ingredients/gin.png')
+  with ingredientImgObj:
+    ingredientImgObj.dotScreen()
+    ingredientImgObj.falseColor((28/255,34/255,66/255,1), (0,0,0,0))
+  with db.savedState():
+    db.blendMode('multiply')
+    constrainImageToHeight(ingredientImgObj, 100, marginLeft + squareSize, marginBottom + squareSize)
+  # db.image(ingredientImgObj, (0,0))
+  
+  # generatedText = requests.post(
+  #     "https://api.deepai.org/api/text-generator",
+  #     data={
+  #         'text': drinkData['description'],
+  #     },
+  #     headers={'api-key': 'cba42b1d-0cf8-40f1-b37f-6615ac018163'}
+  # )
+  # generatedText = generatedText.json()['output']
+  # print(generatedText)
+  db.saveImage('output/spread.png')
 
 if __name__ == '__main__':
   db.newDrawing()
@@ -205,9 +276,40 @@ if __name__ == '__main__':
   with open('data/drinks.json') as f:
     data = json.load(f)
 
+  validDrink = False
+  # while(!validDrink):
   drink, drinkData = random.choice(list(data.items()))
+  
+  searchString = 'http://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + urllib.parse.quote(drink)
+  r = requests.get(searchString)
+  drinkJson = r.json()
+  if(drinkJson['drinks'] is None):
+    while(drinkJson['drinks'] is None):
+      drink, drinkData = random.choice(list(data.items()))
+      
+      searchString = 'http://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + urllib.parse.quote(drink)
+      r = requests.get(searchString)
+      drinkJson = r.json()
 
-  titlePage(drink, drinkData)
+  drinkDetails = drinkJson['drinks'][0]
+  drinkThumbnailURL = drinkDetails['strDrinkThumb']
+  drinkIngredients = []
+  drinkIngredientsMeasures = []
+  for x in range (1,16):
+    ingredientKey = 'strIngredient' + str(x)
+    measureKey = 'strMeasure' + str(x)
+    if(drinkDetails[ingredientKey] != None):
+      drinkIngredients.append(drinkDetails[ingredientKey])
+      drinkIngredientsMeasures.append(drinkDetails[measureKey])
+      print(drinkDetails[measureKey] + " " + drinkDetails[ingredientKey])
+      # print()
+  
+  # print(drinkDetails)
+  # exit()
+
+  # titlePage(drink, drinkData)
+
+  spread(drink, drinkData)
 
   # r = requests.post(
   #     "https://api.deepai.org/api/text2img",
