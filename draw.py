@@ -230,37 +230,37 @@ def spread(drinkName, drinkData, drinkJSON):
   pageWidth = 992
   db.newPage(992, 737)
 
-  # backgroundSquares(992, 737)
+  backgroundSquares(992, 737)
 
   squareSize = 51
   squaresHigh = 12
   squaresWide = 16
   marginBottom = (pageHeight - (squareSize * squaresHigh)) / 2
   marginLeft = (pageWidth - (squareSize * squaresWide)) / 2
-  # with db.savedState():
-  #   db.translate(marginLeft, marginBottom)
-  #   for h in range(0, squaresHigh):
-  #     with db.savedState():
-  #       db.translate(0, h * squareSize)
-  #       borderFlowers(squareSize,3)
+  with db.savedState():
+    db.translate(marginLeft, marginBottom)
+    for h in range(0, squaresHigh):
+      with db.savedState():
+        db.translate(0, h * squareSize)
+        borderFlowers(squareSize,3)
 
-  #   db.translate(squareSize * squaresWide - squareSize, 0)
-  #   for h in range(0, squaresHigh):
-  #     with db.savedState():
-  #       db.translate(0, h * squareSize)
-  #       borderFlowers(squareSize,3)
-  # with db.savedState():
-  #   db.translate(marginLeft + squareSize, marginBottom)
-  #   for w in range(0, squaresWide - 2):
-  #     with db.savedState():
-  #       db.translate(w * squareSize, 0)
-  #       borderFlowers(squareSize,3)
-  # with db.savedState():
-  #   db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
-  #   for w in range(0, squaresWide - 2):
-  #     with db.savedState():
-  #       db.translate(w * squareSize, 0)
-  #       borderFlowers(squareSize,3)
+    db.translate(squareSize * squaresWide - squareSize, 0)
+    for h in range(0, squaresHigh):
+      with db.savedState():
+        db.translate(0, h * squareSize)
+        borderFlowers(squareSize,3)
+  with db.savedState():
+    db.translate(marginLeft + squareSize, marginBottom)
+    for w in range(0, squaresWide - 2):
+      with db.savedState():
+        db.translate(w * squareSize, 0)
+        borderFlowers(squareSize,3)
+  with db.savedState():
+    db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
+    for w in range(0, squaresWide - 2):
+      with db.savedState():
+        db.translate(w * squareSize, 0)
+        borderFlowers(squareSize,3)
   
   db.cmykFill(*cmyk(*COLOR_CREAM))
   db.rect(marginLeft + squareSize, marginBottom + squareSize, (squaresWide - 2) * squareSize, (squaresHigh - 2) * squareSize)
@@ -275,7 +275,6 @@ def spread(drinkName, drinkData, drinkJSON):
     if(drinkDetails[ingredientKey] != None):
       drinkIngredients.append(drinkDetails[ingredientKey])
       drinkIngredientsMeasures.append(drinkDetails[measureKey])
-      # print(drinkDetails[measureKey] + " " + drinkDetails[ingredientKey])
 
   i = 0
   for ingredient in drinkIngredients:
@@ -401,7 +400,17 @@ def spread(drinkName, drinkData, drinkJSON):
       'left'
   )
 
-  db.saveImage('output/spread.png')
+  drinkThumbnailURL = drinkDetails['strDrinkThumb']
+  drinkImgObj = db.ImageObject(drinkThumbnailURL)
+  with drinkImgObj:
+    drinkImgObj.dotScreen()
+    drinkImgObj.falseColor((28/255,34/255,66/255,1), (0,0,0,0))
+  with db.savedState():
+    db.blendMode('multiply')
+    constrainImageToHeight(drinkImgObj, 100, pageWidth / 2 + ((squaresWide - 2) * squareSize) / 4 - 50, marginBottom + squareSize + 20)
+  i += 1
+
+  db.saveImage('output/spread.pdf')
 
 if __name__ == '__main__':
   db.newDrawing()
