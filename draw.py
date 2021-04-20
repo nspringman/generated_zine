@@ -167,14 +167,14 @@ def titlePage(drinkName, drinkData):
   pageWidth = 496
   db.newPage(496, 737)
   
-  # db.cmykFill(*cmyk(71, 50, 0, 41))
-  # db.rect(0, 0, 496, 737)
+  db.cmykFill(*cmyk(*COLOR_BLACK))
+  db.rect(0, 0, pageWidth, pageHeight)
   actualSquareWidth = 6/pageWidth
   backgroundSquares(496, 737)
 
   margin = 130
   textBoxHeight = 400
-  textBoxWidth = pageWidth - 2 * margin
+  textBoxWidth = pageWidth - 2 * margin - 40
 
   splitDrink = drinkName.split()
   firstLineHeight = 0
@@ -223,12 +223,15 @@ def titlePage(drinkName, drinkData):
         db.translate(w * squareSize, 0)
         borderFlowers(squareSize,5)
 
-  db.saveImage('output/title-page.png')
+  # db.saveImage('output/title-page.png')
 
 def spread(drinkName, drinkData, drinkJSON):
   pageHeight = 737
   pageWidth = 992
   db.newPage(992, 737)
+
+  db.cmykFill(*cmyk(*COLOR_BLACK))
+  db.rect(0, 0, pageWidth, pageHeight)
 
   backgroundSquares(992, 737)
 
@@ -410,7 +413,7 @@ def spread(drinkName, drinkData, drinkJSON):
     constrainImageToHeight(drinkImgObj, 100, pageWidth / 2 + ((squaresWide - 2) * squareSize) / 4 - 50, marginBottom + squareSize + 20)
   i += 1
 
-  db.saveImage('output/spread.pdf')
+  db.saveImage('output/output.pdf')
 
 if __name__ == '__main__':
   db.newDrawing()
@@ -432,7 +435,7 @@ if __name__ == '__main__':
       r = requests.get(searchString)
       drinkJSON = r.json()
 
-  # titlePage(drink, drinkData)
+  titlePage(drink, drinkData)
   spread(drink, drinkData, drinkJSON)
 
   db.endDrawing()
