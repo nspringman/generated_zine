@@ -343,7 +343,7 @@ def spread(drinkName, drinkData, drinkJSON):
           pageWidth/2 + squareSize + 20,
           pageHeight - (marginBottom + squareSize + 55),
           textBoxWidth,
-          36
+          40
       ),
       'left'
   )
@@ -358,15 +358,45 @@ def spread(drinkName, drinkData, drinkJSON):
     if(i != len(drinkIngredients) - 1):
       ingredientsText += '\n'
 
-  db.font('BalboaPlus-Fill', generatedTextSize)
+  db.font('BalboaPlus-Fill', drinkNameFontSize - 8)
+  db.lineHeight(drinkNameFontSize)
   _, ingredientsHeight = db.textSize(ingredientsText, 'left', width=textBoxWidth)
   db.textBox(
       ingredientsText,
       (
-          pageWidth/2 + squareSize + 20,
-          pageHeight - (marginBottom + squareSize + 55 + ingredientsHeight - 3),
+          pageWidth/2 + squareSize + 20 + 20,
+          pageHeight - (marginBottom + squareSize + 55 + ingredientsHeight - 15),
           textBoxWidth,
           ingredientsHeight
+      ),
+      'left'
+  )
+
+  db.font('BalboaPlus-Fill', drinkNameFontSize - 4)
+  _, prepHeight = db.textSize('Preparation', 'left', width=textBoxWidth)
+  db.textBox(
+      'Preparation',
+      (
+          pageWidth/2 + squareSize + 20,
+          pageHeight - (marginBottom + squareSize + 55 + ingredientsHeight + prepHeight + 20),
+          textBoxWidth,
+          40
+      ),
+      'left'
+  )
+
+  textBoxWidth = textBoxWidth - 60 #-60 for indent
+  db.font('CenturyGothic', (drinkNameFontSize - 8))
+  db.lineHeight(drinkNameFontSize - 7)
+  _, prepDetailsHeight = db.textSize(drinkDetails['strInstructions'].strip(), 'left', width=textBoxWidth)
+
+  db.textBox(
+      drinkDetails['strInstructions'].strip(),
+      (
+          pageWidth/2 + squareSize + 20 + 20,
+          pageHeight - (marginBottom + squareSize + 55 + ingredientsHeight + prepHeight + 20 + prepDetailsHeight),
+          textBoxWidth,
+          prepDetailsHeight
       ),
       'left'
   )
@@ -394,7 +424,6 @@ if __name__ == '__main__':
       drinkJSON = r.json()
 
   # titlePage(drink, drinkData)
-
   spread(drink, drinkData, drinkJSON)
 
   db.endDrawing()
