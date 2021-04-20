@@ -14,6 +14,7 @@ def cmyk(c, m, y, k):
   return (c/100, m/100, y/100, k/100)
 
 def calculateFontSizeByWidth(text, font, textBoxWidth):
+  db.font(font)
   currentFontSize = 10
   if text == "&":
     return 75
@@ -27,6 +28,19 @@ def calculateFontSizeByWidth(text, font, textBoxWidth):
         currentFontSize -= 2
         break
   return currentFontSize
+
+def calculateFontSizeByHeightGivenWidth(text, font, textBoxHeight, textBoxWidth):
+  current_font_size = 1
+  while True:
+      db.fontSize(current_font_size)
+      current_font_size += 1
+      _, current_text_height = db.textSize(text, 'left', width=textBoxWidth)
+      if(current_font_size > 150):
+          break
+      elif(current_text_height > textBoxHeight):
+          current_font_size -= 2
+          break
+  return current_font_size
 
 def colorWithBuffer(buffer, c, m, y, k):
   return cmyk(c + buffer*random.random(), m + buffer*random.random(), y + buffer*random.random(), k + buffer*random.random())
@@ -178,6 +192,7 @@ def titlePage(drinkName, drinkData):
 
   drinkTextWidth, drinkTextHeight = db.textSize(drinkText)
   db.textBox(drinkText, ((pageWidth - drinkTextWidth) / 2, (pageHeight - drinkTextHeight) / 2, drinkTextWidth, drinkTextHeight) )
+ 
   squareSize = 80
   squaresHigh = 8
   squaresWide = 5
@@ -215,9 +230,9 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   pageWidth = 992
   db.newPage(992, 737)
 
-  backgroundSquares(992, 737)
+  # backgroundSquares(992, 737)
 
-  squareSize = 53
+  squareSize = 51
   squaresHigh = 12
   squaresWide = 16
   marginBottom = (pageHeight - (squareSize * squaresHigh)) / 2
@@ -255,7 +270,6 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
     if ingredient == "":
       break
     ingredientUrl = 'http://www.thecocktaildb.com/images/ingredients/' + urllib.parse.quote(drinkIngredients[i]) + '.png'
-    print(ingredientUrl)
     ingredientImgObj = db.ImageObject(ingredientUrl)
     with ingredientImgObj:
       ingredientImgObj.dotScreen()
@@ -264,7 +278,6 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
       db.blendMode('multiply')
       constrainImageToHeight(ingredientImgObj, 100, marginLeft + squareSize + (50 * i), marginBottom + squareSize + 20)
     i += 1
-  # db.image(ingredientImgObj, (0,0))
   
   generatedText = requests.post(
       "https://api.deepai.org/api/text-generator",
@@ -275,23 +288,11 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   )
   generatedText = generatedText.json()['output'] + '.'
 
-  current_font_size = 10
-  db.font('CenturyGothic', current_font_size)
-
-  # this is not efficient. Don't show anyone I made this
   textBoxWidth = pageWidth/2 - (marginLeft + 2 * squareSize) 
-  textBoxHeight = pageHeight - (marginBottom * 2 + 2 * squareSize + 160)
-  while True:
-      db.fontSize(current_font_size)
-      current_font_size += 1
-      _, current_text_height = db.textSize(generatedText, 'left', width=textBoxWidth)
-      if(current_font_size > 150):
-          break
-      elif(current_text_height > textBoxHeight):
-          current_font_size -= 2
-          break
+  textBoxHeight = pageHeight - (marginBottom * 2 + 2 * squareSize + 180)
 
-  db.fontSize(current_font_size)
+  current_font_size = calculateFontSizeByHeightGivenWidth(generatedText, 'CenturyGothic', textBoxHeight, textBoxWidth)
+  db.font('CenturyGothic', current_font_size)
   db.fill(28/255,34/255,66/255,1)
   db.textBox(
       generatedText,
@@ -304,6 +305,22 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
       'left'
   )
 
+  current_font_size = 1
+  textBoxWidth = pageWidth/2 - (marginLeft + 2 * squareSize) 
+  textBoxHeight = 25
+  current_font_size = calculateFontSizeByHeightGivenWidth(drink, 'BalboaPlus-Fill', 30, textBoxWidth)
+  db.font('BalboaPlus-Fill', current_font_size)
+  db.fill(28/255,34/255,66/255,1)
+  db.textBox(
+      drink,
+      (
+          marginLeft + squareSize + 20,
+          pageHeight - (marginBottom + squareSize + 55),
+          textBoxWidth,
+          40
+      ),
+      'center'
+  )
   db.saveImage('output/spread.png')
 
 if __name__ == '__main__':
@@ -313,7 +330,6 @@ if __name__ == '__main__':
     data = json.load(f)
 
   validDrink = False
-  # while(!validDrink):
   drink, drinkData = random.choice(list(data.items()))
   
   searchString = 'http://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + urllib.parse.quote(drink)
@@ -338,23 +354,10 @@ if __name__ == '__main__':
       drinkIngredients.append(drinkDetails[ingredientKey])
       drinkIngredientsMeasures.append(drinkDetails[measureKey])
       print(drinkDetails[measureKey] + " " + drinkDetails[ingredientKey])
-      # print()
-  
-  # print(drinkDetails)
-  # exit()
+      
 
   # titlePage(drink, drinkData)
 
   spread(drink, drinkData, drinkIngredients, drinkIngredientsMeasures)
 
-  # r = requests.post(
-  #     "https://api.deepai.org/api/text2img",
-  #     data={
-  #         'text': drink,
-  #     },
-  #     headers={'api-key': 'cba42b1d-0cf8-40f1-b37f-6615ac018163'}
-  # )
-  # imageData = r.json()
-  # print(imageData)
-  # db.image(imageData['output_url'], (0,0))
   db.endDrawing()
