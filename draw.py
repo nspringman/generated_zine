@@ -225,7 +225,7 @@ def titlePage(drinkName, drinkData):
 
   db.saveImage('output/title-page.png')
 
-def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
+def spread(drinkName, drinkData, drinkJSON):
   pageHeight = 737
   pageWidth = 992
   db.newPage(992, 737)
@@ -237,33 +237,45 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   squaresWide = 16
   marginBottom = (pageHeight - (squareSize * squaresHigh)) / 2
   marginLeft = (pageWidth - (squareSize * squaresWide)) / 2
-  with db.savedState():
-    db.translate(marginLeft, marginBottom)
-    for h in range(0, squaresHigh):
-      with db.savedState():
-        db.translate(0, h * squareSize)
-        borderFlowers(squareSize,3)
+  # with db.savedState():
+  #   db.translate(marginLeft, marginBottom)
+  #   for h in range(0, squaresHigh):
+  #     with db.savedState():
+  #       db.translate(0, h * squareSize)
+  #       borderFlowers(squareSize,3)
 
-    db.translate(squareSize * squaresWide - squareSize, 0)
-    for h in range(0, squaresHigh):
-      with db.savedState():
-        db.translate(0, h * squareSize)
-        borderFlowers(squareSize,3)
-  with db.savedState():
-    db.translate(marginLeft + squareSize, marginBottom)
-    for w in range(0, squaresWide - 2):
-      with db.savedState():
-        db.translate(w * squareSize, 0)
-        borderFlowers(squareSize,3)
-  with db.savedState():
-    db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
-    for w in range(0, squaresWide - 2):
-      with db.savedState():
-        db.translate(w * squareSize, 0)
-        borderFlowers(squareSize,3)
+  #   db.translate(squareSize * squaresWide - squareSize, 0)
+  #   for h in range(0, squaresHigh):
+  #     with db.savedState():
+  #       db.translate(0, h * squareSize)
+  #       borderFlowers(squareSize,3)
+  # with db.savedState():
+  #   db.translate(marginLeft + squareSize, marginBottom)
+  #   for w in range(0, squaresWide - 2):
+  #     with db.savedState():
+  #       db.translate(w * squareSize, 0)
+  #       borderFlowers(squareSize,3)
+  # with db.savedState():
+  #   db.translate(marginLeft + squareSize, pageHeight - marginBottom - squareSize)
+  #   for w in range(0, squaresWide - 2):
+  #     with db.savedState():
+  #       db.translate(w * squareSize, 0)
+  #       borderFlowers(squareSize,3)
   
   db.cmykFill(*cmyk(*COLOR_CREAM))
   db.rect(marginLeft + squareSize, marginBottom + squareSize, (squaresWide - 2) * squareSize, (squaresHigh - 2) * squareSize)
+
+  drinkDetails = drinkJSON['drinks'][0]
+  drinkThumbnailURL = drinkDetails['strDrinkThumb']
+  drinkIngredients = []
+  drinkIngredientsMeasures = []
+  for x in range (1,16):
+    ingredientKey = 'strIngredient' + str(x)
+    measureKey = 'strMeasure' + str(x)
+    if(drinkDetails[ingredientKey] != None):
+      drinkIngredients.append(drinkDetails[ingredientKey])
+      drinkIngredientsMeasures.append(drinkDetails[measureKey])
+      # print(drinkDetails[measureKey] + " " + drinkDetails[ingredientKey])
 
   i = 0
   for ingredient in drinkIngredients:
@@ -292,6 +304,7 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   textBoxHeight = pageHeight - (marginBottom * 2 + 2 * squareSize + 180)
 
   current_font_size = calculateFontSizeByHeightGivenWidth(generatedText, 'CenturyGothic', textBoxHeight, textBoxWidth)
+  generatedTextSize = current_font_size
   db.font('CenturyGothic', current_font_size)
   db.fill(28/255,34/255,66/255,1)
   db.textBox(
@@ -309,6 +322,7 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   textBoxWidth = pageWidth/2 - (marginLeft + 2 * squareSize) 
   textBoxHeight = 25
   current_font_size = calculateFontSizeByHeightGivenWidth(drink, 'BalboaPlus-Fill', 30, textBoxWidth)
+  drinkNameFontSize = current_font_size
   db.font('BalboaPlus-Fill', current_font_size)
   db.fill(28/255,34/255,66/255,1)
   db.textBox(
@@ -321,6 +335,42 @@ def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
       ),
       'center'
   )
+  
+  db.font('BalboaPlus-Fill', drinkNameFontSize - 4)
+  db.textBox(
+      'Ingredients',
+      (
+          pageWidth/2 + squareSize + 20,
+          pageHeight - (marginBottom + squareSize + 55),
+          textBoxWidth,
+          36
+      ),
+      'left'
+  )
+
+  ingredientsText = ''
+  for i in range(0, len(drinkIngredients)):
+    ingredientName = drinkIngredients[i]
+    ingredientMeasure = drinkIngredientsMeasures[i]
+    if(ingredient == None or ingredient.strip() == ''):
+      break
+    ingredientsText += ingredientMeasure + '  ' + ingredientName
+    if(i != len(drinkIngredients) - 1):
+      ingredientsText += '\n'
+
+  db.font('BalboaPlus-Fill', generatedTextSize)
+  _, ingredientsHeight = db.textSize(ingredientsText, 'left', width=textBoxWidth)
+  db.textBox(
+      ingredientsText,
+      (
+          pageWidth/2 + squareSize + 20,
+          pageHeight - (marginBottom + squareSize + 55 + ingredientsHeight - 3),
+          textBoxWidth,
+          ingredientsHeight
+      ),
+      'left'
+  )
+
   db.saveImage('output/spread.png')
 
 if __name__ == '__main__':
@@ -334,30 +384,17 @@ if __name__ == '__main__':
   
   searchString = 'http://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + urllib.parse.quote(drink)
   r = requests.get(searchString)
-  drinkJson = r.json()
-  if(drinkJson['drinks'] is None):
-    while(drinkJson['drinks'] is None):
+  drinkJSON = r.json()
+  if(drinkJSON['drinks'] is None):
+    while(drinkJSON['drinks'] is None):
       drink, drinkData = random.choice(list(data.items()))
       
       searchString = 'http://www.thecocktaildb.com/api/json/v1/1/search.php?s=' + urllib.parse.quote(drink)
       r = requests.get(searchString)
-      drinkJson = r.json()
-
-  drinkDetails = drinkJson['drinks'][0]
-  drinkThumbnailURL = drinkDetails['strDrinkThumb']
-  drinkIngredients = []
-  drinkIngredientsMeasures = []
-  for x in range (1,16):
-    ingredientKey = 'strIngredient' + str(x)
-    measureKey = 'strMeasure' + str(x)
-    if(drinkDetails[ingredientKey] != None):
-      drinkIngredients.append(drinkDetails[ingredientKey])
-      drinkIngredientsMeasures.append(drinkDetails[measureKey])
-      print(drinkDetails[measureKey] + " " + drinkDetails[ingredientKey])
-      
+      drinkJSON = r.json()
 
   # titlePage(drink, drinkData)
 
-  spread(drink, drinkData, drinkIngredients, drinkIngredientsMeasures)
+  spread(drink, drinkData, drinkJSON)
 
   db.endDrawing()
