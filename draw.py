@@ -210,7 +210,7 @@ def titlePage(drinkName, drinkData):
 
   db.saveImage('output/title-page.png')
 
-def spread(drinkName, drinkData):
+def spread(drinkName, drinkData, drinkIngredients, drinkIngredientsMeasures):
   pageHeight = 737
   pageWidth = 992
   db.newPage(992, 737)
@@ -250,24 +250,60 @@ def spread(drinkName, drinkData):
   db.cmykFill(*cmyk(*COLOR_CREAM))
   db.rect(marginLeft + squareSize, marginBottom + squareSize, (squaresWide - 2) * squareSize, (squaresHigh - 2) * squareSize)
 
-  ingredientImgObj = db.ImageObject('http://www.thecocktaildb.com/images/ingredients/gin.png')
-  with ingredientImgObj:
-    ingredientImgObj.dotScreen()
-    ingredientImgObj.falseColor((28/255,34/255,66/255,1), (0,0,0,0))
-  with db.savedState():
-    db.blendMode('multiply')
-    constrainImageToHeight(ingredientImgObj, 100, marginLeft + squareSize, marginBottom + squareSize)
+  i = 0
+  for ingredient in drinkIngredients:
+    if ingredient == "":
+      break
+    ingredientUrl = 'http://www.thecocktaildb.com/images/ingredients/' + urllib.parse.quote(drinkIngredients[i]) + '.png'
+    print(ingredientUrl)
+    ingredientImgObj = db.ImageObject(ingredientUrl)
+    with ingredientImgObj:
+      ingredientImgObj.dotScreen()
+      ingredientImgObj.falseColor((28/255,34/255,66/255,1), (0,0,0,0))
+    with db.savedState():
+      db.blendMode('multiply')
+      constrainImageToHeight(ingredientImgObj, 100, marginLeft + squareSize + (50 * i), marginBottom + squareSize + 20)
+    i += 1
   # db.image(ingredientImgObj, (0,0))
   
-  # generatedText = requests.post(
-  #     "https://api.deepai.org/api/text-generator",
-  #     data={
-  #         'text': drinkData['description'],
-  #     },
-  #     headers={'api-key': 'cba42b1d-0cf8-40f1-b37f-6615ac018163'}
-  # )
-  # generatedText = generatedText.json()['output']
-  # print(generatedText)
+  generatedText = requests.post(
+      "https://api.deepai.org/api/text-generator",
+      data={
+          'text': drinkData['description'],
+      },
+      headers={'api-key': 'cba42b1d-0cf8-40f1-b37f-6615ac018163'}
+  )
+  generatedText = generatedText.json()['output'] + '.'
+
+  current_font_size = 10
+  db.font('CenturyGothic', current_font_size)
+
+  # this is not efficient. Don't show anyone I made this
+  textBoxWidth = pageWidth/2 - (marginLeft + 2 * squareSize) 
+  textBoxHeight = pageHeight - (marginBottom * 2 + 2 * squareSize + 160)
+  while True:
+      db.fontSize(current_font_size)
+      current_font_size += 1
+      _, current_text_height = db.textSize(generatedText, 'left', width=textBoxWidth)
+      if(current_font_size > 150):
+          break
+      elif(current_text_height > textBoxHeight):
+          current_font_size -= 2
+          break
+
+  db.fontSize(current_font_size)
+  db.fill(28/255,34/255,66/255,1)
+  db.textBox(
+      generatedText,
+      (
+          marginLeft + squareSize + 20,
+          marginBottom + squareSize + 140,
+          textBoxWidth,
+          textBoxHeight
+      ),
+      'left'
+  )
+
   db.saveImage('output/spread.png')
 
 if __name__ == '__main__':
@@ -309,7 +345,7 @@ if __name__ == '__main__':
 
   # titlePage(drink, drinkData)
 
-  spread(drink, drinkData)
+  spread(drink, drinkData, drinkIngredients, drinkIngredientsMeasures)
 
   # r = requests.post(
   #     "https://api.deepai.org/api/text2img",
